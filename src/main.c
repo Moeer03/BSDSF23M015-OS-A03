@@ -5,15 +5,24 @@ int main() {
     char** arglist;
 
     while ((cmdline = read_cmd(PROMPT, stdin)) != NULL) {
-        if ((arglist = tokenize(cmdline)) != NULL) {
-            execute(arglist);
 
-            // Free the memory allocated by tokenize()
-            for (int i = 0; arglist[i] != NULL; i++) {
-                free(arglist[i]);
-            }
-            free(arglist);
+        // tokenize first
+        arglist = tokenize(cmdline);
+        if (arglist == NULL) {
+            free(cmdline);
+            continue;
         }
+
+        // check for built-in
+        if (!handle_builtin(arglist)) {
+            execute(arglist);
+        }
+
+        // free allocated memory
+        for (int i = 0; arglist[i] != NULL; i++) {
+            free(arglist[i]);
+        }
+        free(arglist);
         free(cmdline);
     }
 
