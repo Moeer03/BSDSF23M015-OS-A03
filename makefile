@@ -1,4 +1,3 @@
-
 # --------- Directory Variables ---------
 SRC_DIR     := src
 INCLUDE_DIR := include
@@ -6,9 +5,10 @@ OBJ_DIR     := obj
 BIN_DIR     := bin
 
 # --------- Compiler Settings -----------
-CC      := gcc
-CFLAGS  := -Wall -Wextra -I$(INCLUDE_DIR)
-TARGET  := $(BIN_DIR)/myshell
+CC       := gcc
+CFLAGS   := -Wall -Wextra -I$(INCLUDE_DIR)
+LDFLAGS  := -lreadline
+TARGET   := $(BIN_DIR)/myshell
 
 # --------- Source and Object Files -----
 SRCS := $(SRC_DIR)/main.c $(SRC_DIR)/shell.c $(SRC_DIR)/execute.c
@@ -25,7 +25,7 @@ all: $(TARGET)
 # =========================================================
 $(TARGET): $(OBJS) | $(BIN_DIR)
 	@echo "🔗 Linking object files..."
-	$(CC) $(OBJS) -o $(TARGET)
+	$(CC) $(OBJS) -o $(TARGET) $(LDFLAGS)
 	@echo "🚀 Executable created at $(TARGET)"
 
 # =========================================================

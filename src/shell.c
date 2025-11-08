@@ -3,28 +3,25 @@
 char* history[HISTORY_SIZE];
 int history_count = 0;
 
-
+// =========================
+// FEATURE 4: Readline Integration
+// =========================
 char* read_cmd(char* prompt, FILE* fp) {
-    printf("%s", prompt);
-    char* cmdline = (char*) malloc(sizeof(char) * MAX_LEN);
-    int c, pos = 0;
+    char* cmdline = readline(prompt);
 
-    while ((c = getc(fp)) != EOF) {
-        if (c == '\n') break;
-        cmdline[pos++] = c;
-    }
+    if (cmdline == NULL) // Ctrl+D
+        return NULL;
 
-    if (c == EOF && pos == 0) {
-        free(cmdline);
-        return NULL; // Handle Ctrl+D
-    }
-    
-    cmdline[pos] = '\0';
+    if (strlen(cmdline) > 0)
+        add_history(cmdline);  // Readline’s built-in history
+
     return cmdline;
 }
 
+// =========================
+// Tokenization Logic
+// =========================
 char** tokenize(char* cmdline) {
-    // Edge case: empty command line
     if (cmdline == NULL || cmdline[0] == '\0' || cmdline[0] == '\n') {
         return NULL;
     }
@@ -41,22 +38,22 @@ char** tokenize(char* cmdline) {
     int argnum = 0;
 
     while (*cp != '\0' && argnum < MAXARGS) {
-        while (*cp == ' ' || *cp == '\t') cp++; // Skip leading whitespace
-        
-        if (*cp == '\0') break; // Line was only whitespace
+        while (*cp == ' ' || *cp == '\t') cp++;
+        if (*cp == '\0') break;
 
         start = cp;
         len = 1;
-        while (*++cp != '\0' && !(*cp == ' ' || *cp == '\t')) {
+        while (*++cp != '\0' && !(*cp == ' ' || *cp == '\t'))
             len++;
-        }
+
         strncpy(arglist[argnum], start, len);
         arglist[argnum][len] = '\0';
         argnum++;
     }
 
-    if (argnum == 0) { // No arguments were parsed
-        for(int i = 0; i < MAXARGS + 1; i++) free(arglist[i]);
+    if (argnum == 0) {
+        for (int i = 0; i < MAXARGS + 1; i++)
+            free(arglist[i]);
         free(arglist);
         return NULL;
     }
@@ -65,6 +62,9 @@ char** tokenize(char* cmdline) {
     return arglist;
 }
 
+// =========================
+// Built-in Command Handler
+// =========================
 int handle_builtin(char **arglist) {
     if (arglist[0] == NULL)
         return 1; // empty input handled
@@ -89,6 +89,7 @@ int handle_builtin(char **arglist) {
         printf("  exit\n");
         printf("  help\n");
         printf("  jobs\n");
+        printf("  history\n");
         return 1;
     }
 
@@ -97,18 +98,21 @@ int handle_builtin(char **arglist) {
         return 1;
     }
 
-    else if (strcmp(arglist[0], "history") == 0) {
-    show_history();
-    return 1;
+    if (strcmp(arglist[0], "history") == 0) {
+        show_history();
+        return 1;
     }
 
     return 0; // not a built-in command
 }
 
+// =========================
+// Command History Functions
+// =========================
 void add_to_history(const char* cmdline) {
     if (cmdline == NULL || strlen(cmdline) == 0) return;
 
-    // free oldest if full
+    // Free oldest if full
     if (history_count == HISTORY_SIZE) {
         free(history[0]);
         for (int i = 1; i < HISTORY_SIZE; i++)
