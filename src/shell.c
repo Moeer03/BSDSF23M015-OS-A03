@@ -1,12 +1,13 @@
 #include "shell.h"
 
+extern Job jobs[MAX_JOBS];
 char* history[HISTORY_SIZE];
 int history_count = 0;
 
 // =========================
 // FEATURE 4: Readline Integration
 // =========================
-char* read_cmd(char* prompt) {
+char* read_cmd(char* prompt, FILE* fp) {
     char* cmdline = readline(prompt);
 
     if (cmdline == NULL) // Ctrl+D
@@ -106,9 +107,19 @@ int handle_builtin(char **arglist) {
     }
 
     if (strcmp(arglist[0], "jobs") == 0) {
-        printf("Job control not yet implemented.\n");
+        printf("Active background jobs:\n");
+        int found = 0;
+        for (int i = 0; i < MAX_JOBS; i++) {
+            extern Job jobs[];
+            if (jobs[i].active) {
+                printf("[%d] PID: %d  CMD: %s\n", i + 1, jobs[i].pid, jobs[i].command);
+                found = 1;
+            }
+        }
+        if (!found) printf("(none)\n");
         return 1;
     }
+
 
     if (strcmp(arglist[0], "history") == 0) {
         show_history();

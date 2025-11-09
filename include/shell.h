@@ -19,8 +19,22 @@
 #define PROMPT "FCIT> "
 #define HISTORY_SIZE 20
 
+
+// =====================
+// Background Jobs Support
+// =====================
+#define MAX_JOBS 50
+
+typedef struct {
+    pid_t pid;
+    char command[256];
+    int active;
+} Job;
+
+extern Job jobs[MAX_JOBS];
+
 // Function prototypes
-char* read_cmd(char* prompt);
+char* read_cmd(char* prompt, FILE* fp);
 char** tokenize(char* cmdline);
 int execute(char** arglist);
 int handle_builtin(char **arglist);
@@ -29,6 +43,9 @@ void show_history();
 char* get_history_command(int n);\
 int execute_with_redirection(char** arglist);
 int execute_with_pipe(char** left_cmd, char** right_cmd);
+int execute_background(char** arglist);
+void reap_zombie_processes();
+
 
 // Global history variables
 extern char* history[HISTORY_SIZE];

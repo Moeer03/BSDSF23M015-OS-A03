@@ -5,36 +5,47 @@ int main() {
     char** arglist;
 
     while ((cmdline = read_cmd(PROMPT, stdin)) != NULL) {
-        if (cmdline[0] == '\0') { // Empty input
+        if (cmdline[0] == '\0') {
             free(cmdline);
             continue;
         }
 
-        // Handle !n re-execution
-        if (cmdline[0] == '!' && strlen(cmdline) > 1) {
-            int n = atoi(cmdline + 1);
-            free(cmdline);
-            cmdline = get_history_command(n);
-            if (cmdline == NULL) continue;
-            printf("%s\n", cmdline); // echo the command being executed
-        }
+        // Split chained commands by ';'
+        char* token = strtok(cmdline, ";");
+        while (token != NULL) {
+            char* sub_cmd = strdup(token);
 
-        // Custom history storage (for our own 'history' command)
-        add_to_history(cmdline);
+            // Handle !n re-execution
+            if (sub_cmd[0] == '!' && strlen(sub_cmd) > 1) {
+                int n = atoi(sub_cmd + 1);
+                free(sub_cmd);
+                sub_cmd = get_history_command(n);
+                if (sub_cmd == NULL) {
+                    token = strtok(NULL, ";");
+                    continue;
+                }
+                printf("%s\n", sub_cmd);
+            }
 
-        // Tokenize and execute
-        if ((arglist = tokenize(cmdline)) != NULL) {
-            if (!handle_builtin(arglist))
-                execute(arglist);
+            add_to_history(sub_cmd);
 
-            for (int i = 0; arglist[i] != NULL; i++)
-                free(arglist[i]);
-            free(arglist);
+            char** arglist = tokenize(sub_cmd);
+            if (arglist != NULL) {
+                if (!handle_builtin(arglist))
+                    execute(arglist);
+
+                for (int i = 0; arglist[i] != NULL; i++)
+                    free(arglist[i]);
+                free(arglist);
+            }
+
+            free(sub_cmd);
+            token = strtok(NULL, ";");
         }
 
         free(cmdline);
     }
-
+    
     printf("\nShell exited.\n");
     return 0;
 }
