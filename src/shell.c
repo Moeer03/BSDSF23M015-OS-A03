@@ -6,7 +6,7 @@ int history_count = 0;
 // =========================
 // FEATURE 4: Readline Integration
 // =========================
-char* read_cmd(char* prompt, FILE* fp) {
+char* read_cmd(char* prompt) {
     char* cmdline = readline(prompt);
 
     if (cmdline == NULL) // Ctrl+D
@@ -38,12 +38,23 @@ char** tokenize(char* cmdline) {
     int argnum = 0;
 
     while (*cp != '\0' && argnum < MAXARGS) {
+        // skip whitespace
         while (*cp == ' ' || *cp == '\t') cp++;
         if (*cp == '\0') break;
 
+        // handle single-character operators
+        if (*cp == '>' || *cp == '<' || *cp == '|') {
+            arglist[argnum][0] = *cp;
+            arglist[argnum][1] = '\0';
+            argnum++;
+            cp++;
+            continue;
+        }
+
+        // handle regular words
         start = cp;
         len = 1;
-        while (*++cp != '\0' && !(*cp == ' ' || *cp == '\t'))
+        while (*++cp != '\0' && !(*cp == ' ' || *cp == '\t' || *cp == '>' || *cp == '<' || *cp == '|'))
             len++;
 
         strncpy(arglist[argnum], start, len);
@@ -61,6 +72,7 @@ char** tokenize(char* cmdline) {
     arglist[argnum] = NULL;
     return arglist;
 }
+
 
 // =========================
 // Built-in Command Handler

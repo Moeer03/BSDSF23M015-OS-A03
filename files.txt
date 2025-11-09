@@ -1,0 +1,10 @@
+total 552
+-rwxrwxrwx 1 moeer moeer  11558 Oct 20 20:21 LICENSE
+-rwxrwxrwx 1 moeer moeer 542579 Oct 13 21:34 PA-03.pdf
+-rwxrwxrwx 1 moeer moeer     20 Oct 20 00:37 README.md
+drwxrwxrwx 1 moeer moeer    512 Nov  9 13:47 bin
+-rwxrwxrwx 1 moeer moeer      0 Nov  9  2025 files.txt
+drwxrwxrwx 1 moeer moeer    512 Nov  8 21:19 include
+-rwxrwxrwx 1 moeer moeer   2128 Nov  8 21:19 makefile
+drwxrwxrwx 1 moeer moeer    512 Nov  9 13:47 obj
+drwxrwxrwx 1 moeer moeer    512 Nov  8 21:19 src
