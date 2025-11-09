@@ -159,3 +159,87 @@ char* get_history_command(int n) {
     }
     return strdup(history[n - 1]);
 }
+
+int handle_if_condition(char *cmdline) {
+    // Detect start of an if block
+    if (strncmp(cmdline, "if ", 3) != 0)
+        return 0;  // not an if statement
+
+    // Extract the condition command (after 'if ')
+    char if_cmd[256] = {0};
+    strncpy(if_cmd, cmdline + 3, sizeof(if_cmd) - 1);
+
+    char then_block[512] = {0};
+    char else_block[512] = {0};
+    int in_then = 0, in_else = 0;
+    char line[MAX_LEN];
+
+    // Keep reading until "fi" is found
+    while (1) {
+        printf("> ");
+        fflush(stdout);
+
+        if (fgets(line, sizeof(line), stdin) == NULL)
+            break;
+
+        // Strip newline
+        line[strcspn(line, "\n")] = '\0';
+
+        // Detect keywords
+        if (strcmp(line, "then") == 0) {
+            in_then = 1;
+            in_else = 0;
+            continue;
+        } else if (strcmp(line, "else") == 0) {
+            in_else = 1;
+            in_then = 0;
+            continue;
+        } else if (strcmp(line, "fi") == 0) {
+            break;
+        }
+
+        // Append to the right block
+        if (in_then) {
+            strcat(then_block, line);
+            strcat(then_block, "\n");
+        } else if (in_else) {
+            strcat(else_block, line);
+            strcat(else_block, "\n");
+        }
+    }
+
+    // Execute the 'if' condition command
+    char **if_args = tokenize(if_cmd);
+    if (if_args == NULL) return 1;
+
+    pid_t pid = fork();
+    int status;
+    if (pid == 0) {
+        execvp(if_args[0], if_args);
+        perror("exec failed");
+        exit(1);
+    } else {
+        waitpid(pid, &status, 0);
+    }
+
+    for (int i = 0; if_args[i] != NULL; i++) free(if_args[i]);
+    free(if_args);
+
+    int success = (WEXITSTATUS(status) == 0);
+    char *chosen_block = success ? then_block : else_block;
+
+    if (strlen(chosen_block) == 0)
+        return 1; // nothing to run
+
+    // Execute chosen block
+    char **branch_args = tokenize(chosen_block);
+    if (branch_args == NULL) return 1;
+
+    if (!handle_builtin(branch_args))
+        execute(branch_args);
+
+    for (int i = 0; branch_args[i] != NULL; i++) free(branch_args[i]);
+    free(branch_args);
+
+    return 1;
+}

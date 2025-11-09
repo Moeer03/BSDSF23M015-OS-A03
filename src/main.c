@@ -5,11 +5,11 @@ int main() {
     char** arglist;
 
     while ((cmdline = read_cmd(PROMPT, stdin)) != NULL) {
-        if (cmdline[0] == '\0') {
-            free(cmdline);
-            continue;
-        }
-
+        if (strncmp(cmdline, "if ", 3) == 0) {
+        handle_if_condition(cmdline);
+        free(cmdline);
+        continue;
+    }
         // Split chained commands by ';'
         char* token = strtok(cmdline, ";");
         while (token != NULL) {

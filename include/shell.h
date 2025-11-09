@@ -45,6 +45,8 @@ int execute_with_redirection(char** arglist);
 int execute_with_pipe(char** left_cmd, char** right_cmd);
 int execute_background(char** arglist);
 void reap_zombie_processes();
+int handle_if_condition(char *cmdline);
+
 
 
 // Global history variables
