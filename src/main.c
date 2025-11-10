@@ -5,12 +5,29 @@ int main() {
     char** arglist;
 
     while ((cmdline = read_cmd(PROMPT, stdin)) != NULL) {
+
+        // --- Handle IF condition ---
         if (strncmp(cmdline, "if ", 3) == 0) {
-        handle_if_condition(cmdline);
-        free(cmdline);
-        continue;
-    }
-        // Split chained commands by ';'
+            handle_if_condition(cmdline);
+            free(cmdline);
+            continue;
+        }
+
+        // --- Handle FOR loop ---
+        if (strncmp(cmdline, "for ", 4) == 0) {
+            handle_for_loop(cmdline);
+            free(cmdline);
+            continue;
+        }
+
+        // --- Handle WHILE loop ---
+        if (strncmp(cmdline, "while ", 6) == 0) {
+            handle_while_loop(cmdline);
+            free(cmdline);
+            continue;
+        }
+
+        // --- Handle command chaining using ';' ---
         char* token = strtok(cmdline, ";");
         while (token != NULL) {
             char* sub_cmd = strdup(token);
@@ -27,8 +44,10 @@ int main() {
                 printf("%s\n", sub_cmd);
             }
 
+            // Add command to history
             add_to_history(sub_cmd);
 
+            // Tokenize and execute
             char** arglist = tokenize(sub_cmd);
             if (arglist != NULL) {
                 if (!handle_builtin(arglist))
@@ -45,7 +64,7 @@ int main() {
 
         free(cmdline);
     }
-    
+
     printf("\nShell exited.\n");
     return 0;
 }

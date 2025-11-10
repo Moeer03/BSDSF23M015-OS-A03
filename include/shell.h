@@ -46,6 +46,8 @@ int execute_with_pipe(char** left_cmd, char** right_cmd);
 int execute_background(char** arglist);
 void reap_zombie_processes();
 int handle_if_condition(char *cmdline);
+int handle_for_loop(char *cmdline);
+int handle_while_loop(char *cmdline);
 
 
 

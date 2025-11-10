@@ -243,3 +243,121 @@ int handle_if_condition(char *cmdline) {
 
     return 1;
 }
+
+int handle_for_loop(char *cmdline) {
+    if (strncmp(cmdline, "for ", 4) != 0)
+        return 0; // not a for loop
+
+    // Find structure keywords
+    char *do_part = strstr(cmdline, "do");
+    char *done_part = strstr(cmdline, "done");
+
+    if (!do_part || !done_part) {
+        fprintf(stderr, "Syntax error: missing 'do' or 'done'\n");
+        return 1;
+    }
+
+    // Extract "for var in ..."
+    char header[256] = {0};
+    strncpy(header, cmdline + 4, do_part - (cmdline + 4));
+    header[do_part - (cmdline + 4)] = '\0';
+
+    char var[32] = {0};
+    char items[256] = {0};
+
+    // Parse variable and items
+    if (sscanf(header, "%s in %[^\n]", var, items) != 2) {
+        fprintf(stderr, "Syntax error in for-loop header\n");
+        return 1;
+    }
+
+    // Extract command inside do...done
+    char body[256] = {0};
+    strncpy(body, do_part + 2, done_part - (do_part + 2));
+    body[done_part - (do_part + 2)] = '\0';
+
+    // Tokenize items
+    char *token = strtok(items, " ");
+    while (token != NULL) {
+        // Build the body command replacing $var
+        char expanded[512];
+        char *pos = strstr(body, "$");
+        if (pos) {
+            snprintf(expanded, sizeof(expanded), "%.*s%s%s",
+                     (int)(pos - body), body, token, pos + strlen(var) + 1);
+        } else {
+            strncpy(expanded, body, sizeof(expanded));
+        }
+
+        // Execute the expanded body
+        char **args = tokenize(expanded);
+        if (args != NULL) {
+            if (!handle_builtin(args))
+                execute(args);
+            for (int i = 0; args[i] != NULL; i++)
+                free(args[i]);
+            free(args);
+        }
+
+        token = strtok(NULL, " ");
+    }
+
+    return 1; // handled
+}
+
+int handle_while_loop(char *cmdline) {
+    if (strncmp(cmdline, "while ", 6) != 0)
+        return 0; // not a while loop
+
+    char *do_part = strstr(cmdline, "do");
+    char *done_part = strstr(cmdline, "done");
+
+    if (!do_part || !done_part) {
+        fprintf(stderr, "Syntax error: missing 'do' or 'done'\n");
+        return 1;
+    }
+
+    char condition[256] = {0};
+    strncpy(condition, cmdline + 6, do_part - (cmdline + 6));
+    condition[do_part - (cmdline + 6)] = '\0';
+
+    char body[256] = {0};
+    strncpy(body, do_part + 2, done_part - (do_part + 2));
+    body[done_part - (do_part + 2)] = '\0';
+
+    while (1) {
+        // Evaluate condition
+        char **cond_args = tokenize(condition);
+        if (cond_args == NULL) break;
+
+        pid_t pid = fork();
+        int status;
+        if (pid == 0) {
+            execvp(cond_args[0], cond_args);
+            exit(1);
+        } else {
+            waitpid(pid, &status, 0);
+        }
+
+        int success = (WEXITSTATUS(status) == 0);
+
+        for (int i = 0; cond_args[i] != NULL; i++)
+            free(cond_args[i]);
+        free(cond_args);
+
+        if (!success)
+            break; // condition failed
+
+        // Execute body
+        char **body_args = tokenize(body);
+        if (body_args != NULL) {
+            if (!handle_builtin(body_args))
+                execute(body_args);
+            for (int i = 0; body_args[i] != NULL; i++)
+                free(body_args[i]);
+            free(body_args);
+        }
+    }
+
+    return 1;
+}
