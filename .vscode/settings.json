@@ -1,6 +1,8 @@
 {
     "files.associations": {
         "*.dbclient-js": "javascript",
-        "types.h": "c"
-    }
+        "types.h": "c",
+        "signal.h": "c"
+    },
+    "makefile.configureOnOpen": false
 }

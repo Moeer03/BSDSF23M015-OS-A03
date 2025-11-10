@@ -48,6 +48,12 @@ void reap_zombie_processes();
 int handle_if_condition(char *cmdline);
 int handle_for_loop(char *cmdline);
 int handle_while_loop(char *cmdline);
+// Signal & job control
+void setup_signal_handlers();
+void sigint_handler(int sig);
+void sigtstp_handler(int sig);
+void fg_command();
+void bg_command();
 
 
 

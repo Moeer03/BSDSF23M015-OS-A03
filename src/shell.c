@@ -1,3 +1,4 @@
+#include <signal.h>
 #include "shell.h"
 
 extern Job jobs[MAX_JOBS];
@@ -125,6 +126,17 @@ int handle_builtin(char **arglist) {
         show_history();
         return 1;
     }
+
+    if (strcmp(arglist[0], "fg") == 0) {
+        fg_command();
+        return 1;
+    }
+
+    if (strcmp(arglist[0], "bg") == 0) {
+        bg_command();
+        return 1;
+    }
+
 
     return 0; // not a built-in command
 }
@@ -360,4 +372,51 @@ int handle_while_loop(char *cmdline) {
     }
 
     return 1;
+}
+
+// Ignore Ctrl+C / Ctrl+Z in shell
+void setup_signal_handlers() {
+    signal(SIGINT, sigint_handler);
+    signal(SIGTSTP, sigtstp_handler);
+}
+
+// Custom SIGINT handler
+void sigint_handler(int sig) {
+    printf("\n(Type 'exit' to quit)\n");
+    printf("%s", PROMPT);
+    fflush(stdout);
+}
+
+// Custom SIGTSTP handler
+void sigtstp_handler(int sig) {
+    printf("\n(Suspension ignored in shell)\n");
+    printf("%s", PROMPT);
+    fflush(stdout);
+}
+
+// Bring last stopped job to foreground
+void fg_command() {
+    for (int i = MAX_JOBS - 1; i >= 0; i--) {
+        if (jobs[i].active) {
+            int status;
+            printf("Resuming PID %d in foreground...\n", jobs[i].pid);
+            kill(jobs[i].pid, SIGCONT);
+            waitpid(jobs[i].pid, &status, 0);
+            jobs[i].active = 0;
+            return;
+        }
+    }
+    printf("No background jobs.\n");
+}
+
+// Resume last stopped job in background
+void bg_command() {
+    for (int i = MAX_JOBS - 1; i >= 0; i--) {
+        if (jobs[i].active) {
+            printf("Resuming PID %d in background...\n", jobs[i].pid);
+            kill(jobs[i].pid, SIGCONT);
+            return;
+        }
+    }
+    printf("No background jobs.\n");
 }
